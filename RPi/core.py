@@ -56,55 +56,28 @@ I2C         = 42
 HARD_PWM    = 43
 
 # [API] Output modes
-LOW  = gpiod.Line.ACTIVE_LOW
-HIGH = gpiod.Line.ACTIVE_HIGH
-
-_LINE_ACTIVE_STATE_COSNT_TO_FLAG = {
-    LOW: gpiod.LINE_REQ_FLAG_ACTIVE_LOW,
-    HIGH: 0,  # Active High is set by the default flag
-}
-
-
-# Macro
-def active_flag(const):
-    return _LINE_ACTIVE_STATE_COSNT_TO_FLAG[const]
-
+LOW  = True
+HIGH = False
 
 # [API] Software pull up/pull down resistor modes
 # We map RPi.GPIO PUD modes to libgpiod PUD constants
-PUD_OFF     = gpiod.Line.BIAS_AS_IS
-PUD_UP      = gpiod.Line.BIAS_PULL_UP
-PUD_DOWN    = gpiod.Line.BIAS_PULL_DOWN
+PUD_OFF     = gpiod.line.Bias.AS_IS
+PUD_UP      = gpiod.line.Bias.PULL_UP
+PUD_DOWN    = gpiod.line.Bias.PULL_DOWN
 
 # We extend RPi.GPIO with the ability to explicitly disable pull up/down behavior
-PUD_DISABLE = gpiod.Line.BIAS_DISABLE
-
-# libgpiod uses distinct flag values for each line bias constant returned by
-# the gpiod.Line.bias() method. To simplify our translation, we map the latter
-# to the former with the following dictionary
-_LINE_BIAS_CONST_TO_FLAG = {
-    PUD_OFF:    0,  # This behavior is indicated with the default flag
-    PUD_UP:     gpiod.LINE_REQ_FLAG_BIAS_PULL_UP,
-    PUD_DOWN:   gpiod.LINE_REQ_FLAG_BIAS_PULL_DOWN,
-    PUD_DISABLE: gpiod.LINE_REQ_FLAG_BIAS_DISABLE,
-}
-
-
-# Macro
-def bias_flag(const):
-    return _LINE_BIAS_CONST_TO_FLAG[const]
-
+PUD_DISABLE = gpiod.line.Bias.DISABLED
 
 # Internal line modes
 _line_mode_none     = 0
-_line_mode_in       = gpiod.LINE_REQ_DIR_IN
-_line_mode_out      = gpiod.LINE_REQ_DIR_OUT
-_line_mode_falling  = gpiod.LINE_REQ_EV_FALLING_EDGE
-_line_mode_rising   = gpiod.LINE_REQ_EV_RISING_EDGE
-_line_mode_both     = gpiod.LINE_REQ_EV_BOTH_EDGES
+_line_mode_in       = gpiod.line.Direction.INPUT
+_line_mode_out      = gpiod.line.Direction.OUTPUT
+_line_mode_falling  = gpiod.line.Edge.FALLING
+_line_mode_rising   = gpiod.line.Edge.RISING
+_line_mode_both     = gpiod.line.Edge.BOTH
 # As of yet unused and unexposed
 # TODO investigate AS_IS kernel behavior
-_line_mode_as_is    = gpiod.LINE_REQ_DIR_AS_IS
+_line_mode_as_is    = gpiod.line.Direction.AS_IS
 
 
 # [API] Line event types
@@ -467,15 +440,6 @@ def line_get_direction(channel):
 
 def line_get_bias(channel):
     return _State.lines[channel].line.bias()
-
-
-# Since libgpiod does not expose a get_flags option, we roll our own here
-# by bitwise OR'ing all the flag getters that we use
-_LIBGPIOD_FLAG_GETTERS = {
-    line_get_bias: bias_flag,
-    line_get_active_state: active_flag,
-}
-
 
 def line_get_flags(channel):
     flags = 0
